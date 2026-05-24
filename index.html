@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Finanzas JL Pro - Contabilidad</title>
+  <title>Finanzas JL Pro - Núcleo Contable</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <aside class="sidebar">
     <div class="brand">
       <h1>FINANZAS JL</h1>
-      <span>Versión Contable</span>
+      <span>Núcleo Contable</span>
     </div>
 
     <nav>
@@ -19,6 +19,7 @@
       <button class="nav-item" data-screen="terceros">👥 Terceros</button>
       <button class="nav-item" data-screen="inventario">📦 Inventario</button>
       <button class="nav-item" data-screen="historial">📄 Historial</button>
+      <button class="nav-item" data-screen="cartera">💰 Cartera</button>
       <button class="nav-item" data-screen="reportes">📊 Reportes</button>
     </nav>
   </aside>
@@ -27,9 +28,12 @@
     <header class="topbar">
       <div>
         <h2 id="screenTitle">Inicio</h2>
-        <p id="screenSubtitle">Panel general de Finanzas JL Pro.</p>
+        <p id="screenSubtitle">Sistema contable integrado para comprobantes, terceros e inventario.</p>
       </div>
-      <div class="status-pill">Versión escritorio</div>
+      <div class="top-actions">
+        <button class="btn-secondary" id="demoBtn">Cargar demo</button>
+        <button class="btn-danger" id="resetBtn">Limpiar datos</button>
+      </div>
     </header>
 
     <!-- INICIO -->
@@ -40,41 +44,63 @@
           <strong id="metricIngresos">$ 0</strong>
         </article>
         <article class="metric-card red">
-          <span>Gastos / Egresos</span>
-          <strong id="metricGastos">$ 0</strong>
+          <span>Egresos / compras</span>
+          <strong id="metricEgresos">$ 0</strong>
         </article>
         <article class="metric-card blue">
-          <span>Terceros registrados</span>
-          <strong id="metricTerceros">0</strong>
+          <span>Cuentas por cobrar</span>
+          <strong id="metricCxc">$ 0</strong>
         </article>
         <article class="metric-card yellow">
-          <span>Productos / servicios</span>
-          <strong id="metricInventario">0</strong>
+          <span>Cuentas por pagar</span>
+          <strong id="metricCxp">$ 0</strong>
         </article>
       </div>
 
       <section class="card">
         <div class="section-title">
-          <h3>Flujo contable recomendado</h3>
-          <p>Primero registra terceros e inventario. Después crea los comprobantes.</p>
+          <h3>Flujo integrado</h3>
+          <p>La app registra comprobantes y genera efectos contables básicos automáticamente.</p>
         </div>
-
         <div class="workflow">
-          <div>1. Crear tercero</div>
-          <div>2. Crear producto/servicio</div>
-          <div>3. Registrar comprobante</div>
-          <div>4. Revisar historial</div>
-          <div>5. Generar reportes</div>
+          <div>1. Tercero</div>
+          <div>2. Inventario</div>
+          <div>3. Comprobante</div>
+          <div>4. CxC / CxP</div>
+          <div>5. Asiento</div>
+          <div>6. Impresión</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-title">
+          <h3>Últimos comprobantes</h3>
+          <p>Desde aquí puedes imprimir rápidamente.</p>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Número</th>
+                <th>Tercero</th>
+                <th>Total</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="recentTable"></tbody>
+          </table>
         </div>
       </section>
     </section>
 
-    <!-- NUEVO COMPROBANTE -->
+    <!-- NUEVO -->
     <section id="nuevo" class="screen">
-      <section class="card form-shell">
+      <section class="card">
         <div class="section-title">
-          <h3>Información general</h3>
-          <p>Selecciona el tipo de comprobante. El tercero y los ítems pueden venir de los módulos registrados.</p>
+          <h3>Nuevo comprobante</h3>
+          <p>Busca terceros y productos sin importar si tienes cientos o miles de registros.</p>
         </div>
 
         <div class="grid grid-4">
@@ -90,43 +116,41 @@
             </select>
           </label>
 
-          <label>
-            Consecutivo
-            <input id="consecutivo" type="text" placeholder="Ej: FV-001" />
+          <label>Consecutivo
+            <input id="consecutivo" placeholder="Ej: FV-001">
           </label>
 
-          <label>
-            Fecha
-            <input id="fecha" type="date" />
+          <label>Fecha
+            <input id="fecha" type="date">
           </label>
 
-          <label>
-            Tercero
-            <select id="terceroComprobante">
-              <option value="">Seleccionar tercero...</option>
+          <label>Estado
+            <select id="estadoComprobante">
+              <option>Borrador</option>
+              <option>Emitido</option>
+              <option>Anulado</option>
             </select>
           </label>
         </div>
 
-        <div id="terceroResumen" class="info-strip hidden"></div>
+        <div class="selector-card">
+          <div>
+            <small>Tercero seleccionado</small>
+            <strong id="terceroSeleccionadoTexto">Ninguno</strong>
+            <p id="terceroSeleccionadoDetalle">Busca por nombre, NIT, ciudad, correo o tipo.</p>
+          </div>
+          <button class="btn-primary" id="buscarTerceroBtn">Buscar tercero</button>
+        </div>
       </section>
 
-      <section id="dynamicForm" class="card dynamic-form empty-state">
+      <section id="dynamicForm" class="card empty-state">
         <h3>Selecciona un tipo de comprobante</h3>
-        <p>Cuando selecciones una opción, aquí aparecerán los campos contables.</p>
+        <p>Cuando selecciones una opción, aparecerán los campos del documento.</p>
       </section>
 
       <section class="actions">
-        <button class="btn-secondary" id="limpiarBtn">Limpiar</button>
-        <button class="btn-primary" id="guardarBtn">Guardar comprobante</button>
-      </section>
-
-      <section class="card">
-        <div class="section-title">
-          <h3>Vista previa de datos</h3>
-          <p>Sirve para revisar lo que se captura antes de conectarlo definitivamente a Firebase.</p>
-        </div>
-        <pre id="preview">{}</pre>
+        <button class="btn-secondary" id="limpiarComprobanteBtn">Limpiar</button>
+        <button class="btn-primary" id="guardarComprobanteBtn">Guardar comprobante</button>
       </section>
     </section>
 
@@ -135,12 +159,12 @@
       <section class="card">
         <div class="section-title">
           <h3>Registrar tercero</h3>
-          <p>Clientes, proveedores, empleados, acreedores o terceros mixtos.</p>
+          <p>Clientes, proveedores, empleados o acreedores.</p>
         </div>
 
         <div class="grid grid-4">
           <label>Tipo de tercero
-            <select id="terceroTipo">
+            <select id="terTipo">
               <option>Cliente</option>
               <option>Proveedor</option>
               <option>Cliente y proveedor</option>
@@ -149,30 +173,19 @@
               <option>Otro</option>
             </select>
           </label>
-
-          <label>Tipo de identificación
-            <select id="terceroTipoId">
+          <label>Tipo ID
+            <select id="terTipoId">
               <option>Cédula</option>
               <option>NIT</option>
-              <option>Pasaporte</option>
               <option>CE</option>
+              <option>Pasaporte</option>
             </select>
           </label>
-
-          <label>Número identificación
-            <input id="terceroNumeroId" placeholder="Ej: 900000000-1">
-          </label>
-
-          <label>DV
-            <input id="terceroDv" placeholder="Opcional">
-          </label>
-
-          <label>Nombre / Razón social
-            <input id="terceroNombre" placeholder="Nombre completo o razón social">
-          </label>
-
-          <label>Responsabilidad tributaria
-            <select id="terceroResponsabilidad">
+          <label>Número ID <input id="terNumeroId"></label>
+          <label>DV <input id="terDv"></label>
+          <label>Nombre / Razón social <input id="terNombre"></label>
+          <label>Responsabilidad
+            <select id="terResponsabilidad">
               <option>No responsable de IVA</option>
               <option>Responsable de IVA</option>
               <option>Régimen Simple</option>
@@ -181,50 +194,32 @@
               <option>Otro</option>
             </select>
           </label>
-
-          <label>Ciudad
-            <input id="terceroCiudad" placeholder="Pasto">
-          </label>
-
-          <label>Dirección
-            <input id="terceroDireccion">
-          </label>
-
-          <label>Teléfono
-            <input id="terceroTelefono">
-          </label>
-
-          <label>Correo
-            <input id="terceroCorreo" type="email">
-          </label>
-
-          <label>Cuenta contable sugerida
-            <input id="terceroCuenta" placeholder="Ej: 1305 / 2205">
-          </label>
-
+          <label>Ciudad <input id="terCiudad"></label>
+          <label>Dirección <input id="terDireccion"></label>
+          <label>Teléfono <input id="terTelefono"></label>
+          <label>Correo <input id="terCorreo" type="email"></label>
+          <label>Cuenta sugerida <input id="terCuenta" placeholder="1305 / 2205"></label>
           <label>Estado
-            <select id="terceroEstado">
+            <select id="terEstado">
               <option>Activo</option>
               <option>Inactivo</option>
             </select>
           </label>
         </div>
 
-        <br>
-        <label>Observaciones
-          <textarea id="terceroObservaciones"></textarea>
-        </label>
-
         <div class="actions">
-          <button class="btn-secondary" id="limpiarTerceroBtn">Limpiar tercero</button>
+          <button class="btn-secondary" id="limpiarTerceroBtn">Limpiar</button>
           <button class="btn-primary" id="guardarTerceroBtn">Guardar tercero</button>
         </div>
       </section>
 
       <section class="card">
-        <div class="section-title">
-          <h3>Listado de terceros</h3>
-          <p>Estos terceros se pueden seleccionar al crear facturas, egresos, recibos de caja y cuentas por pagar.</p>
+        <div class="section-title with-search">
+          <div>
+            <h3>Listado de terceros</h3>
+            <p>También se pueden buscar desde cada documento.</p>
+          </div>
+          <input id="tercerosSearch" class="search-input" placeholder="Buscar tercero...">
         </div>
         <div class="table-wrap">
           <table class="data-table">
@@ -248,8 +243,8 @@
     <section id="inventario" class="screen">
       <section class="card">
         <div class="section-title">
-          <h3>Registrar producto o servicio</h3>
-          <p>Inventario para facturas de venta, compra y control de costos.</p>
+          <h3>Registrar producto / servicio</h3>
+          <p>El inventario se puede buscar desde cada factura.</p>
         </div>
 
         <div class="grid grid-4">
@@ -261,74 +256,41 @@
               <option>Insumo</option>
             </select>
           </label>
-
-          <label>Código
-            <input id="itemCodigo" placeholder="Ej: P001">
-          </label>
-
-          <label>Nombre / descripción
-            <input id="itemNombre" placeholder="Producto o servicio">
-          </label>
-
+          <label>Código <input id="itemCodigo"></label>
+          <label>Nombre / descripción <input id="itemNombre"></label>
           <label>Unidad
             <select id="itemUnidad">
               <option>Und</option>
+              <option>Servicio</option>
+              <option>Hora</option>
               <option>Kg</option>
               <option>Metro</option>
-              <option>Hora</option>
-              <option>Servicio</option>
               <option>Otro</option>
             </select>
           </label>
-
-          <label>Categoría
-            <input id="itemCategoria" placeholder="Ej: Servicios contables">
-          </label>
-
-          <label>Costo unitario
-            <input id="itemCosto" type="number" value="0">
-          </label>
-
-          <label>Precio de venta
-            <input id="itemPrecio" type="number" value="0">
-          </label>
-
-          <label>IVA %
-            <input id="itemIva" type="number" value="0">
-          </label>
-
-          <label>Stock inicial
-            <input id="itemStock" type="number" value="0">
-          </label>
-
-          <label>Stock mínimo
-            <input id="itemStockMinimo" type="number" value="0">
-          </label>
-
-          <label>Cuenta ingreso
-            <input id="itemCuentaIngreso" placeholder="Ej: 4135">
-          </label>
-
-          <label>Cuenta costo/gasto
-            <input id="itemCuentaCosto" placeholder="Ej: 6135 / 5135">
-          </label>
+          <label>Categoría <input id="itemCategoria"></label>
+          <label>Costo unitario <input id="itemCosto" type="number" value="0"></label>
+          <label>Precio venta <input id="itemPrecio" type="number" value="0"></label>
+          <label>IVA % <input id="itemIva" type="number" value="0"></label>
+          <label>Stock actual <input id="itemStock" type="number" value="0"></label>
+          <label>Stock mínimo <input id="itemStockMinimo" type="number" value="0"></label>
+          <label>Cuenta ingreso <input id="itemCuentaIngreso" placeholder="4135"></label>
+          <label>Cuenta costo/gasto <input id="itemCuentaCosto" placeholder="6135 / 5135"></label>
         </div>
 
-        <br>
-        <label>Observaciones
-          <textarea id="itemObservaciones"></textarea>
-        </label>
-
         <div class="actions">
-          <button class="btn-secondary" id="limpiarItemBtn">Limpiar producto</button>
-          <button class="btn-primary" id="guardarItemBtn">Guardar producto/servicio</button>
+          <button class="btn-secondary" id="limpiarItemBtn">Limpiar</button>
+          <button class="btn-primary" id="guardarItemBtn">Guardar ítem</button>
         </div>
       </section>
 
       <section class="card">
-        <div class="section-title">
-          <h3>Inventario registrado</h3>
-          <p>Los ítems de esta tabla se cargan automáticamente en las facturas.</p>
+        <div class="section-title with-search">
+          <div>
+            <h3>Inventario</h3>
+            <p>Busca por código, nombre, tipo o categoría.</p>
+          </div>
+          <input id="inventarioSearch" class="search-input" placeholder="Buscar producto o servicio...">
         </div>
         <div class="table-wrap">
           <table class="data-table">
@@ -353,19 +315,25 @@
     <!-- HISTORIAL -->
     <section id="historial" class="screen">
       <section class="card">
-        <div class="section-title">
-          <h3>Historial de comprobantes</h3>
-          <p>Comprobantes guardados durante la prueba local.</p>
+        <div class="section-title with-search">
+          <div>
+            <h3>Historial de comprobantes</h3>
+            <p>Imprime factura, egreso, recibo, cuenta por pagar o compra.</p>
+          </div>
+          <input id="historialSearch" class="search-input" placeholder="Buscar comprobante...">
         </div>
+
         <div class="table-wrap">
           <table class="data-table">
             <thead>
               <tr>
                 <th>Fecha</th>
                 <th>Tipo</th>
-                <th>Consecutivo</th>
+                <th>Número</th>
                 <th>Tercero</th>
-                <th>Total / Valor</th>
+                <th>Total</th>
+                <th>Efecto</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody id="historialTable"></tbody>
@@ -374,25 +342,83 @@
       </section>
     </section>
 
+    <!-- CARTERA -->
+    <section id="cartera" class="screen">
+      <div class="two-columns">
+        <section class="card">
+          <div class="section-title">
+            <h3>Cuentas por cobrar</h3>
+            <p>Se generan automáticamente en ventas a crédito.</p>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Fecha</th><th>Tercero</th><th>Documento</th><th>Saldo</th><th>Estado</th></tr></thead>
+              <tbody id="cxcTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-title">
+            <h3>Cuentas por pagar</h3>
+            <p>Se generan automáticamente en compras a crédito o cuentas por pagar.</p>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Fecha</th><th>Tercero</th><th>Documento</th><th>Saldo</th><th>Estado</th></tr></thead>
+              <tbody id="cxpTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </section>
+
     <!-- REPORTES -->
     <section id="reportes" class="screen">
-      <section class="card">
-        <div class="section-title">
-          <h3>Reportes</h3>
-          <p>Base para reportes contables futuros: ventas, compras, cuentas por pagar, caja e inventario.</p>
-        </div>
+      <div class="two-columns">
+        <section class="card">
+          <div class="section-title">
+            <h3>Asientos contables generados</h3>
+            <p>Asientos automáticos básicos según el tipo de comprobante.</p>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Fecha</th><th>Documento</th><th>Cuenta</th><th>Débito</th><th>Crédito</th></tr></thead>
+              <tbody id="asientosTable"></tbody>
+            </table>
+          </div>
+        </section>
 
-        <div class="report-grid">
-          <div class="report-card">📘 Libro auxiliar</div>
-          <div class="report-card">📄 Reporte de ventas</div>
-          <div class="report-card">📦 Inventario valorizado</div>
-          <div class="report-card">👥 Estado por tercero</div>
-          <div class="report-card">💸 Cuentas por pagar</div>
-          <div class="report-card">🏦 Flujo de caja</div>
-        </div>
-      </section>
+        <section class="card">
+          <div class="section-title">
+            <h3>Kardex básico</h3>
+            <p>Movimiento automático de inventario por compras y ventas.</p>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Fecha</th><th>Ítem</th><th>Entrada</th><th>Salida</th><th>Documento</th></tr></thead>
+              <tbody id="kardexTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
     </section>
   </main>
+
+  <!-- MODAL BUSCADOR -->
+  <div id="searchModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h3 id="modalTitle">Buscar</h3>
+          <p id="modalSubtitle">Escribe para filtrar resultados.</p>
+        </div>
+        <button class="icon-btn" id="closeModalBtn">✕</button>
+      </div>
+      <input id="modalSearchInput" class="modal-search" placeholder="Buscar...">
+      <div id="modalResults" class="modal-results"></div>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>

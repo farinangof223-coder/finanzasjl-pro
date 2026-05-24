@@ -1,68 +1,35 @@
-# Finanzas JL Pro - Base contable con Terceros e Inventario
+# Finanzas JL Pro - Núcleo Contable con búsqueda e impresión
 
-Esta versión amplía la base anterior e incluye tres módulos conectados:
+Esta versión mantiene la base anterior, pero agrega una lógica más integrada tipo sistema contable.
 
-## Módulos
+## Incluye
 
-1. Nuevo comprobante
-2. Terceros
-3. Inventario
-4. Historial
-5. Reportes base
-6. Dashboard inicial
-
-## Funcionalidad incluida
-
-- Registro de terceros:
-  - Cliente
-  - Proveedor
-  - Cliente y proveedor
-  - Empleado
-  - Acreedor
-  - Otro
-
-- Registro de inventario:
-  - Producto
-  - Servicio
-  - Activo
-  - Insumo
-
-- Nuevo comprobante:
-  - Factura de venta
-  - Factura de compra
-  - Cuenta por pagar
-  - Comprobante de egreso
-  - Recibo de caja
-
-- Integraciones internas:
-  - Los terceros registrados aparecen en Nuevo comprobante.
-  - El inventario registrado aparece en la tabla de ítems.
-  - Al seleccionar un producto/servicio, se cargan código, descripción, unidad, precio e IVA.
-  - Los comprobantes guardados aparecen en Historial.
-  - El dashboard suma ingresos, gastos, terceros e inventario.
-
-## Almacenamiento
-
-Esta versión usa localStorage para pruebas locales.
-Más adelante se puede cambiar por Firebase Firestore.
+- Terceros con buscador.
+- Inventario con buscador.
+- Nuevo comprobante con búsqueda de tercero.
+- Ítems con botón Buscar dentro de cada factura.
+- Pensado para muchos productos: el modal filtra por código, nombre, tipo o categoría.
+- Historial con botón Imprimir.
+- Vista de impresión para cada comprobante.
+- Cuentas por cobrar automáticas en factura de venta a crédito.
+- Cuentas por pagar automáticas en factura de compra a crédito o cuenta por pagar.
+- Asientos contables básicos automáticos.
+- Kardex básico para productos en compras y ventas.
+- Dashboard automático.
 
 ## Cómo probar
 
-1. Abre `index.html`.
-2. Registra un tercero.
-3. Registra un producto o servicio.
-4. Ve a Nuevo.
-5. Selecciona un tipo de comprobante.
-6. Selecciona tercero e ítem.
-7. Guarda el comprobante.
-8. Revisa Historial e Inicio.
+1. Abre index.html.
+2. Clic en "Cargar demo".
+3. Ve a Nuevo.
+4. Selecciona Factura de venta.
+5. Busca tercero.
+6. En ítems, clic en Buscar.
+7. Selecciona producto/servicio.
+8. Guarda el comprobante.
+9. Ve a Historial.
+10. Clic en Imprimir.
 
+## Importante
 
-## Corrección Fix Items
-
-Esta versión mejora la tabla de ítems:
-- Selección estable desde inventario.
-- Carga automática de código, descripción, unidad, precio e IVA.
-- Recalcula subtotal, descuento, IVA y total.
-- Permite registrar ítems manuales.
-- Mantiene mínimo un ítem por comprobante.
+Esta versión aún usa localStorage. Después se puede migrar a Firebase para usuarios reales.
