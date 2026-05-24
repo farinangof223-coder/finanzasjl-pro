@@ -1,30 +1,58 @@
-# Finanzas JL - Base Nuevo Comprobante Contable
+# Finanzas JL Pro - Base contable con Terceros e Inventario
 
-Esta es una base funcional para la nueva versión de escritorio de Finanzas JL.
+Esta versión amplía la base anterior e incluye tres módulos conectados:
 
-## Incluye
+## Módulos
 
-- Menú lateral tipo escritorio.
-- Ventana "Nuevo comprobante".
-- Campo "Tipo de comprobante".
-- Formularios dinámicos para:
+1. Nuevo comprobante
+2. Terceros
+3. Inventario
+4. Historial
+5. Reportes base
+6. Dashboard inicial
+
+## Funcionalidad incluida
+
+- Registro de terceros:
+  - Cliente
+  - Proveedor
+  - Cliente y proveedor
+  - Empleado
+  - Acreedor
+  - Otro
+
+- Registro de inventario:
+  - Producto
+  - Servicio
+  - Activo
+  - Insumo
+
+- Nuevo comprobante:
   - Factura de venta
   - Factura de compra
   - Cuenta por pagar
   - Comprobante de egreso
   - Recibo de caja
-- Tabla de ítems con subtotal, descuento, IVA y total.
-- Cálculo de valor neto en comprobante de egreso.
-- Vista previa JSON para conectar luego con historial, localStorage o Firebase.
+
+- Integraciones internas:
+  - Los terceros registrados aparecen en Nuevo comprobante.
+  - El inventario registrado aparece en la tabla de ítems.
+  - Al seleccionar un producto/servicio, se cargan código, descripción, unidad, precio e IVA.
+  - Los comprobantes guardados aparecen en Historial.
+  - El dashboard suma ingresos, gastos, terceros e inventario.
+
+## Almacenamiento
+
+Esta versión usa localStorage para pruebas locales.
+Más adelante se puede cambiar por Firebase Firestore.
 
 ## Cómo probar
 
-Abre `index.html` en tu navegador.
-
-## Próximo paso recomendado
-
-Integrar esta pantalla dentro de la nueva versión de Finanzas JL Pro y conectar el botón Guardar con:
-1. localStorage para prueba local.
-2. Historial de comprobantes.
-3. Exportación PDF/Excel.
-4. Firebase para usuarios reales.
+1. Abre `index.html`.
+2. Registra un tercero.
+3. Registra un producto o servicio.
+4. Ve a Nuevo.
+5. Selecciona un tipo de comprobante.
+6. Selecciona tercero e ítem.
+7. Guarda el comprobante.
+8. Revisa Historial e Inicio.

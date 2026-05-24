@@ -1,41 +1,49 @@
+const state = {
+  terceros: JSON.parse(localStorage.getItem("finanzasjl_terceros") || "[]"),
+  inventario: JSON.parse(localStorage.getItem("finanzasjl_inventario") || "[]"),
+  comprobantes: JSON.parse(localStorage.getItem("finanzasjl_comprobantes") || "[]")
+};
+
+const screens = {
+  inicio: ["Inicio", "Panel general de Finanzas JL Pro."],
+  nuevo: ["Nuevo comprobante", "Registra documentos contables conectados con terceros e inventario."],
+  terceros: ["Terceros", "Administra clientes, proveedores, empleados y acreedores."],
+  inventario: ["Inventario", "Administra productos, servicios, costos, precios, impuestos y stock."],
+  historial: ["Historial", "Consulta los comprobantes registrados."],
+  reportes: ["Reportes", "Base para reportes contables y administrativos."]
+};
+
+document.querySelectorAll(".nav-item").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const screen = btn.dataset.screen;
+    document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.getElementById(screen).classList.add("active");
+
+    document.getElementById("screenTitle").textContent = screens[screen][0];
+    document.getElementById("screenSubtitle").textContent = screens[screen][1];
+    renderAll();
+  });
+});
+
 const tipoComprobante = document.getElementById("tipoComprobante");
 const dynamicForm = document.getElementById("dynamicForm");
 const preview = document.getElementById("preview");
 const limpiarBtn = document.getElementById("limpiarBtn");
 const guardarBtn = document.getElementById("guardarBtn");
-
 const fechaInput = document.getElementById("fecha");
+const terceroComprobante = document.getElementById("terceroComprobante");
+const terceroResumen = document.getElementById("terceroResumen");
+
 fechaInput.valueAsDate = new Date();
 
 const templates = {
   factura_venta: `
     <div class="section-title">
       <h3>Factura de venta</h3>
-      <p>Formulario orientado a datos fiscales, cliente, ítems, impuestos, forma y medio de pago.</p>
-    </div>
-
-    <div class="form-block">
-      <h4>Datos del emisor</h4>
-      <div class="grid grid-3">
-        <label>Razón social del emisor <input data-field="emisorRazonSocial" placeholder="Ej: Finanzas JL S.A.S"></label>
-        <label>NIT del emisor <input data-field="emisorNit" placeholder="Ej: 901000000-1"></label>
-        <label>Responsabilidad tributaria <input data-field="emisorResponsabilidad" placeholder="Ej: Responsable de IVA"></label>
-        <label>Dirección <input data-field="emisorDireccion"></label>
-        <label>Teléfono <input data-field="emisorTelefono"></label>
-        <label>Correo <input data-field="emisorCorreo" type="email"></label>
-      </div>
-    </div>
-
-    <div class="form-block">
-      <h4>Datos del cliente / adquirente</h4>
-      <div class="grid grid-3">
-        <label>Nombre o razón social <input data-field="clienteNombre"></label>
-        <label>NIT / Cédula <input data-field="clienteDocumento"></label>
-        <label>Ciudad <input data-field="clienteCiudad"></label>
-        <label>Dirección <input data-field="clienteDireccion"></label>
-        <label>Teléfono <input data-field="clienteTelefono"></label>
-        <label>Correo <input data-field="clienteCorreo" type="email"></label>
-      </div>
+      <p>Documento de venta con cliente, ítems, impuestos, forma y medio de pago.</p>
     </div>
 
     <div class="form-block">
@@ -70,35 +78,23 @@ const templates = {
       </div>
     </div>
 
-    ${itemsTableTemplate("venta")}
-
-    <div class="form-block">
-      <h4>Observaciones</h4>
-      <textarea data-field="observaciones" placeholder="Notas, condiciones, información adicional..."></textarea>
-    </div>
+    ${itemsTableTemplate()}
+    ${asientoVentaTemplate()}
+    ${observacionesTemplate()}
   `,
 
   factura_compra: `
     <div class="section-title">
       <h3>Factura de compra</h3>
-      <p>Registro de facturas recibidas de proveedores para control de costos, gastos, IVA y cuentas por pagar.</p>
+      <p>Registro de compras recibidas de proveedores para costos, gastos, IVA e inventario.</p>
     </div>
 
     <div class="form-block">
-      <h4>Proveedor</h4>
-      <div class="grid grid-3">
-        <label>Proveedor <input data-field="proveedorNombre"></label>
-        <label>NIT / Cédula <input data-field="proveedorDocumento"></label>
-        <label>Correo <input data-field="proveedorCorreo" type="email"></label>
+      <h4>Datos de la compra</h4>
+      <div class="grid grid-4">
         <label>Número factura proveedor <input data-field="numeroFacturaProveedor"></label>
         <label>CUFE / referencia electrónica <input data-field="cufe"></label>
         <label>Fecha vencimiento <input data-field="fechaVencimiento" type="date"></label>
-      </div>
-    </div>
-
-    <div class="form-block">
-      <h4>Condiciones</h4>
-      <div class="grid grid-3">
         <label>Forma de pago
           <select data-field="formaPago">
             <option>Contado</option>
@@ -110,12 +106,8 @@ const templates = {
       </div>
     </div>
 
-    ${itemsTableTemplate("compra")}
-
-    <div class="form-block">
-      <h4>Observaciones</h4>
-      <textarea data-field="observaciones"></textarea>
-    </div>
+    ${itemsTableTemplate()}
+    ${observacionesTemplate()}
   `,
 
   cuenta_pagar: `
@@ -127,12 +119,18 @@ const templates = {
     <div class="form-block">
       <h4>Información de la obligación</h4>
       <div class="grid grid-3">
-        <label>Proveedor / acreedor <input data-field="acreedorNombre"></label>
-        <label>NIT / Cédula <input data-field="acreedorDocumento"></label>
         <label>Documento origen <input data-field="documentoOrigen" placeholder="Factura, cuenta de cobro, contrato..."></label>
         <label>Número documento <input data-field="numeroDocumento"></label>
         <label>Fecha causación <input data-field="fechaCausacion" type="date"></label>
         <label>Fecha vencimiento <input data-field="fechaVencimiento" type="date"></label>
+        <label>Cuenta por pagar <input data-field="cuentaPorPagar" placeholder="Ej: 2205"></label>
+        <label>Estado
+          <select data-field="estado">
+            <option>Pendiente</option>
+            <option>Parcial</option>
+            <option>Pagada</option>
+          </select>
+        </label>
       </div>
     </div>
 
@@ -146,25 +144,7 @@ const templates = {
       </div>
     </div>
 
-    <div class="form-block">
-      <h4>Clasificación contable</h4>
-      <div class="grid grid-3">
-        <label>Cuenta por pagar <input data-field="cuentaPorPagar" placeholder="Ej: 2205"></label>
-        <label>Cuenta gasto / activo <input data-field="cuentaContrapartida"></label>
-        <label>Estado
-          <select data-field="estado">
-            <option>Pendiente</option>
-            <option>Parcial</option>
-            <option>Pagada</option>
-          </select>
-        </label>
-      </div>
-    </div>
-
-    <div class="form-block">
-      <h4>Concepto</h4>
-      <textarea data-field="concepto"></textarea>
-    </div>
+    ${observacionesTemplate("Concepto")}
   `,
 
   comprobante_egreso: `
@@ -174,20 +154,12 @@ const templates = {
     </div>
 
     <div class="form-block">
-      <h4>Beneficiario</h4>
-      <div class="grid grid-3">
-        <label>Beneficiario <input data-field="beneficiarioNombre"></label>
-        <label>NIT / Cédula <input data-field="beneficiarioDocumento"></label>
+      <h4>Información del pago</h4>
+      <div class="grid grid-4">
         <label>Concepto del pago <input data-field="conceptoPago"></label>
         <label>Documento relacionado <input data-field="documentoRelacionado" placeholder="Factura / cuenta por pagar"></label>
         <label>Número referencia <input data-field="numeroReferencia"></label>
         <label>Fecha de pago <input data-field="fechaPago" type="date"></label>
-      </div>
-    </div>
-
-    <div class="form-block">
-      <h4>Información del pago</h4>
-      <div class="grid grid-4">
         <label>Forma de pago
           <select data-field="formaPago">
             <option>Contado</option>
@@ -239,9 +211,9 @@ const templates = {
         <label>Revisó <input data-field="reviso"></label>
         <label>Aprobó <input data-field="aprobo"></label>
       </div>
-      <br>
-      <textarea data-field="observaciones" placeholder="Observaciones del pago..."></textarea>
     </div>
+
+    ${observacionesTemplate()}
   `,
 
   recibo_caja: `
@@ -251,18 +223,10 @@ const templates = {
     </div>
 
     <div class="form-block">
-      <h4>Datos del tercero</h4>
-      <div class="grid grid-3">
-        <label>Cliente / tercero <input data-field="terceroNombre"></label>
-        <label>NIT / Cédula <input data-field="terceroDocumento"></label>
-        <label>Documento relacionado <input data-field="documentoRelacionado"></label>
-      </div>
-    </div>
-
-    <div class="form-block">
       <h4>Ingreso recibido</h4>
       <div class="grid grid-4">
         <label>Concepto <input data-field="conceptoIngreso"></label>
+        <label>Documento relacionado <input data-field="documentoRelacionado"></label>
         <label>Medio de pago
           <select data-field="medioPago">
             <option>Efectivo</option>
@@ -287,19 +251,20 @@ const templates = {
         <label>Cuenta crédito <input data-field="cuentaCredito" placeholder="Cliente / Ingreso"></label>
         <label>Recibido por <input data-field="recibidoPor"></label>
       </div>
-      <br>
-      <textarea data-field="observaciones"></textarea>
     </div>
+
+    ${observacionesTemplate()}
   `
 };
 
-function itemsTableTemplate(tipo) {
+function itemsTableTemplate() {
   return `
     <div class="form-block">
       <h4>Detalle de ítems</h4>
       <table class="items-table">
         <thead>
           <tr>
+            <th>Producto/servicio</th>
             <th>Código</th>
             <th>Descripción</th>
             <th>Cantidad</th>
@@ -335,6 +300,12 @@ function itemsTableTemplate(tipo) {
 function itemRowTemplate() {
   return `
     <tr class="item-row">
+      <td>
+        <select data-item="inventarioId" class="inventario-select">
+          <option value="">Manual...</option>
+          ${state.inventario.map(i => `<option value="${i.id}">${i.codigo} - ${i.nombre}</option>`).join("")}
+        </select>
+      </td>
       <td><input data-item="codigo" placeholder="001"></td>
       <td><input data-item="descripcion" placeholder="Producto o servicio"></td>
       <td><input data-item="cantidad" type="number" value="1" min="0"></td>
@@ -348,15 +319,40 @@ function itemRowTemplate() {
   `;
 }
 
-tipoComprobante.addEventListener("change", () => {
+function asientoVentaTemplate() {
+  return `
+    <div class="form-block">
+      <h4>Asiento contable sugerido</h4>
+      <div class="grid grid-3">
+        <label>Débito <input data-field="cuentaDebito" placeholder="1305 Clientes / 1105 Caja"></label>
+        <label>Crédito ingreso <input data-field="cuentaCreditoIngreso" placeholder="4135 Ingresos"></label>
+        <label>Crédito IVA <input data-field="cuentaCreditoIva" placeholder="2408 IVA por pagar"></label>
+      </div>
+    </div>
+  `;
+}
+
+function observacionesTemplate(title = "Observaciones") {
+  return `
+    <div class="form-block">
+      <h4>${title}</h4>
+      <textarea data-field="observaciones" placeholder="Notas, condiciones o información adicional..."></textarea>
+    </div>
+  `;
+}
+
+tipoComprobante.addEventListener("change", renderDynamicForm);
+terceroComprobante.addEventListener("change", () => {
+  renderTerceroResumen();
+  updatePreview();
+});
+
+function renderDynamicForm() {
   const selected = tipoComprobante.value;
 
   if (!selected) {
     dynamicForm.className = "card dynamic-form empty-state";
-    dynamicForm.innerHTML = `
-      <h3>Selecciona un tipo de comprobante</h3>
-      <p>Cuando selecciones una opción, aquí aparecerán los campos contables.</p>
-    `;
+    dynamicForm.innerHTML = `<h3>Selecciona un tipo de comprobante</h3><p>Cuando selecciones una opción, aquí aparecerán los campos contables.</p>`;
     updatePreview();
     return;
   }
@@ -365,24 +361,22 @@ tipoComprobante.addEventListener("change", () => {
   dynamicForm.innerHTML = templates[selected];
   bindDynamicEvents();
   updatePreview();
-});
+}
 
 function bindDynamicEvents() {
   const addItemBtn = document.getElementById("addItemBtn");
   if (addItemBtn) {
-    addItemBtn.addEventListener("click", () => {
+    addItemBtn.onclick = () => {
       document.getElementById("itemsBody").insertAdjacentHTML("beforeend", itemRowTemplate());
       bindDynamicEvents();
       calculateItems();
       updatePreview();
-    });
+    };
   }
 
   dynamicForm.querySelectorAll("input, select, textarea").forEach(el => {
-    el.removeEventListener("input", handleInput);
-    el.addEventListener("input", handleInput);
-    el.removeEventListener("change", handleInput);
-    el.addEventListener("change", handleInput);
+    el.oninput = handleInput;
+    el.onchange = handleInput;
   });
 
   dynamicForm.querySelectorAll(".remove-row").forEach(btn => {
@@ -395,6 +389,24 @@ function bindDynamicEvents() {
       }
     };
   });
+
+  dynamicForm.querySelectorAll(".inventario-select").forEach(select => {
+    select.onchange = (e) => fillItemFromInventory(e.target);
+  });
+}
+
+function fillItemFromInventory(select) {
+  const item = state.inventario.find(i => i.id === select.value);
+  const row = select.closest("tr");
+  if (!item || !row) return;
+
+  row.querySelector('[data-item="codigo"]').value = item.codigo;
+  row.querySelector('[data-item="descripcion"]').value = item.nombre;
+  row.querySelector('[data-item="unidad"]').value = item.unidad;
+  row.querySelector('[data-item="valorUnitario"]').value = item.precio;
+  row.querySelector('[data-item="iva"]').value = item.iva;
+  calculateItems();
+  updatePreview();
 }
 
 function handleInput() {
@@ -405,10 +417,7 @@ function handleInput() {
 
 function calculateItems() {
   const rows = dynamicForm.querySelectorAll(".item-row");
-  let subtotal = 0;
-  let descuentoTotal = 0;
-  let ivaTotal = 0;
-  let granTotal = 0;
+  let subtotal = 0, descuentoTotal = 0, ivaTotal = 0, granTotal = 0;
 
   rows.forEach(row => {
     const cantidad = Number(row.querySelector('[data-item="cantidad"]')?.value || 0);
@@ -426,8 +435,7 @@ function calculateItems() {
     ivaTotal += ivaLinea;
     granTotal += totalLinea;
 
-    const lineTotal = row.querySelector(".line-total");
-    if (lineTotal) lineTotal.textContent = money(totalLinea);
+    row.querySelector(".line-total").textContent = money(totalLinea);
   });
 
   setText("subtotal", money(subtotal));
@@ -441,9 +449,7 @@ function calculateEgreso() {
   const reteFuente = Number(dynamicForm.querySelector('[data-field="reteFuente"]')?.value || 0);
   const reteIva = Number(dynamicForm.querySelector('[data-field="reteIva"]')?.value || 0);
   const otrasDeducciones = Number(dynamicForm.querySelector('[data-field="otrasDeducciones"]')?.value || 0);
-
-  const neto = valorBruto - reteFuente - reteIva - otrasDeducciones;
-  setText("netoEgreso", money(neto));
+  setText("netoEgreso", money(valorBruto - reteFuente - reteIva - otrasDeducciones));
 }
 
 function setText(id, value) {
@@ -452,20 +458,21 @@ function setText(id, value) {
 }
 
 function money(value) {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    maximumFractionDigits: 0
-  }).format(value || 0);
+  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value || 0);
 }
 
 function collectData() {
+  const tercero = state.terceros.find(t => t.id === terceroComprobante.value) || null;
+
   const data = {
+    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
     tipoComprobante: tipoComprobante.value,
     consecutivo: document.getElementById("consecutivo").value,
     fecha: document.getElementById("fecha").value,
+    tercero,
     campos: {},
-    items: []
+    items: [],
+    total: getTotalCurrentForm()
   };
 
   dynamicForm.querySelectorAll("[data-field]").forEach(el => {
@@ -477,12 +484,41 @@ function collectData() {
     row.querySelectorAll("[data-item]").forEach(el => {
       item[el.dataset.item] = el.value;
     });
-    if (Object.values(item).some(v => String(v).trim() !== "")) {
-      data.items.push(item);
-    }
+    if (Object.values(item).some(v => String(v).trim() !== "")) data.items.push(item);
   });
 
   return data;
+}
+
+function getTotalCurrentForm() {
+  const rows = dynamicForm.querySelectorAll(".item-row");
+  let total = 0;
+  rows.forEach(row => {
+    const cantidad = Number(row.querySelector('[data-item="cantidad"]')?.value || 0);
+    const valorUnitario = Number(row.querySelector('[data-item="valorUnitario"]')?.value || 0);
+    const descuento = Number(row.querySelector('[data-item="descuento"]')?.value || 0);
+    const iva = Number(row.querySelector('[data-item="iva"]')?.value || 0);
+    const base = Math.max(cantidad * valorUnitario - descuento, 0);
+    total += base + base * (iva / 100);
+  });
+
+  if (!rows.length && tipoComprobante.value === "comprobante_egreso") {
+    const valorBruto = Number(dynamicForm.querySelector('[data-field="valorBruto"]')?.value || 0);
+    const reteFuente = Number(dynamicForm.querySelector('[data-field="reteFuente"]')?.value || 0);
+    const reteIva = Number(dynamicForm.querySelector('[data-field="reteIva"]')?.value || 0);
+    const otrasDeducciones = Number(dynamicForm.querySelector('[data-field="otrasDeducciones"]')?.value || 0);
+    total = valorBruto - reteFuente - reteIva - otrasDeducciones;
+  }
+
+  if (!rows.length && tipoComprobante.value === "recibo_caja") {
+    total = Number(dynamicForm.querySelector('[data-field="valorNeto"]')?.value || 0);
+  }
+
+  if (!rows.length && tipoComprobante.value === "cuenta_pagar") {
+    total = Number(dynamicForm.querySelector('[data-field="saldoPendiente"]')?.value || 0);
+  }
+
+  return total;
 }
 
 function updatePreview() {
@@ -491,23 +527,204 @@ function updatePreview() {
 
 guardarBtn.addEventListener("click", () => {
   const data = collectData();
+  if (!data.tipoComprobante) return alert("Selecciona un tipo de comprobante.");
+  if (!data.tercero) return alert("Selecciona un tercero.");
 
-  if (!data.tipoComprobante) {
-    alert("Selecciona un tipo de comprobante.");
-    return;
-  }
-
-  console.log("Comprobante guardado:", data);
-  alert("Base lista: el comprobante se capturó en JSON. El siguiente paso es guardarlo en historial, localStorage o Firebase.");
+  state.comprobantes.push(data);
+  saveState();
+  renderAll();
+  alert("Comprobante guardado en historial local.");
 });
 
 limpiarBtn.addEventListener("click", () => {
   tipoComprobante.value = "";
   document.getElementById("consecutivo").value = "";
+  terceroComprobante.value = "";
   fechaInput.valueAsDate = new Date();
-  tipoComprobante.dispatchEvent(new Event("change"));
+  renderTerceroResumen();
+  renderDynamicForm();
 });
 
-document.addEventListener("input", updatePreview);
-document.addEventListener("change", updatePreview);
-updatePreview();
+function renderTerceroResumen() {
+  const tercero = state.terceros.find(t => t.id === terceroComprobante.value);
+  if (!tercero) {
+    terceroResumen.classList.add("hidden");
+    terceroResumen.textContent = "";
+    return;
+  }
+
+  terceroResumen.classList.remove("hidden");
+  terceroResumen.textContent = `${tercero.tipo} | ${tercero.nombre} | ${tercero.tipoId}: ${tercero.numeroId} | ${tercero.responsabilidad}`;
+}
+
+/* TERCEROS */
+document.getElementById("guardarTerceroBtn").addEventListener("click", () => {
+  const tercero = {
+    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+    tipo: val("terceroTipo"),
+    tipoId: val("terceroTipoId"),
+    numeroId: val("terceroNumeroId"),
+    dv: val("terceroDv"),
+    nombre: val("terceroNombre"),
+    responsabilidad: val("terceroResponsabilidad"),
+    ciudad: val("terceroCiudad"),
+    direccion: val("terceroDireccion"),
+    telefono: val("terceroTelefono"),
+    correo: val("terceroCorreo"),
+    cuenta: val("terceroCuenta"),
+    estado: val("terceroEstado"),
+    observaciones: val("terceroObservaciones")
+  };
+
+  if (!tercero.numeroId || !tercero.nombre) return alert("El tercero necesita identificación y nombre.");
+
+  state.terceros.push(tercero);
+  saveState();
+  limpiarTercero();
+  renderAll();
+  alert("Tercero guardado.");
+});
+
+document.getElementById("limpiarTerceroBtn").addEventListener("click", limpiarTercero);
+
+function limpiarTercero() {
+  ["terceroNumeroId","terceroDv","terceroNombre","terceroCiudad","terceroDireccion","terceroTelefono","terceroCorreo","terceroCuenta","terceroObservaciones"].forEach(id => document.getElementById(id).value = "");
+}
+
+/* INVENTARIO */
+document.getElementById("guardarItemBtn").addEventListener("click", () => {
+  const item = {
+    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+    tipo: val("itemTipo"),
+    codigo: val("itemCodigo"),
+    nombre: val("itemNombre"),
+    unidad: val("itemUnidad"),
+    categoria: val("itemCategoria"),
+    costo: Number(val("itemCosto") || 0),
+    precio: Number(val("itemPrecio") || 0),
+    iva: Number(val("itemIva") || 0),
+    stock: Number(val("itemStock") || 0),
+    stockMinimo: Number(val("itemStockMinimo") || 0),
+    cuentaIngreso: val("itemCuentaIngreso"),
+    cuentaCosto: val("itemCuentaCosto"),
+    observaciones: val("itemObservaciones")
+  };
+
+  if (!item.codigo || !item.nombre) return alert("El producto/servicio necesita código y nombre.");
+
+  state.inventario.push(item);
+  saveState();
+  limpiarItem();
+  renderAll();
+  renderDynamicForm();
+  alert("Producto/servicio guardado.");
+});
+
+document.getElementById("limpiarItemBtn").addEventListener("click", limpiarItem);
+
+function limpiarItem() {
+  ["itemCodigo","itemNombre","itemCategoria","itemCosto","itemPrecio","itemIva","itemStock","itemStockMinimo","itemCuentaIngreso","itemCuentaCosto","itemObservaciones"].forEach(id => document.getElementById(id).value = id.includes("Costo") || id.includes("Precio") || id.includes("Iva") || id.includes("Stock") ? "0" : "");
+}
+
+function val(id) {
+  return document.getElementById(id).value.trim();
+}
+
+function saveState() {
+  localStorage.setItem("finanzasjl_terceros", JSON.stringify(state.terceros));
+  localStorage.setItem("finanzasjl_inventario", JSON.stringify(state.inventario));
+  localStorage.setItem("finanzasjl_comprobantes", JSON.stringify(state.comprobantes));
+}
+
+/* RENDER */
+function renderAll() {
+  renderTerceros();
+  renderInventario();
+  renderTerceroOptions();
+  renderHistorial();
+  renderMetrics();
+  renderTerceroResumen();
+  updatePreview();
+}
+
+function renderTerceros() {
+  const tbody = document.getElementById("tercerosTable");
+  tbody.innerHTML = state.terceros.map(t => `
+    <tr>
+      <td>${t.tipo}</td>
+      <td>${t.tipoId} ${t.numeroId}${t.dv ? "-" + t.dv : ""}</td>
+      <td>${t.nombre}</td>
+      <td>${t.responsabilidad}</td>
+      <td>${t.ciudad}</td>
+      <td>${t.correo}</td>
+    </tr>
+  `).join("") || `<tr><td colspan="6">No hay terceros registrados.</td></tr>`;
+}
+
+function renderInventario() {
+  const tbody = document.getElementById("inventarioTable");
+  tbody.innerHTML = state.inventario.map(i => `
+    <tr>
+      <td>${i.tipo}</td>
+      <td>${i.codigo}</td>
+      <td>${i.nombre}</td>
+      <td>${i.unidad}</td>
+      <td>${money(i.costo)}</td>
+      <td>${money(i.precio)}</td>
+      <td>${i.iva}%</td>
+      <td>${i.stock}</td>
+    </tr>
+  `).join("") || `<tr><td colspan="8">No hay productos o servicios registrados.</td></tr>`;
+}
+
+function renderTerceroOptions() {
+  const current = terceroComprobante.value;
+  terceroComprobante.innerHTML = `<option value="">Seleccionar tercero...</option>` + state.terceros
+    .filter(t => t.estado === "Activo")
+    .map(t => `<option value="${t.id}">${t.nombre} - ${t.numeroId}</option>`)
+    .join("");
+  terceroComprobante.value = current;
+}
+
+function renderHistorial() {
+  const tbody = document.getElementById("historialTable");
+  tbody.innerHTML = state.comprobantes.map(c => `
+    <tr>
+      <td>${c.fecha}</td>
+      <td>${labelTipo(c.tipoComprobante)}</td>
+      <td>${c.consecutivo}</td>
+      <td>${c.tercero?.nombre || ""}</td>
+      <td>${money(c.total)}</td>
+    </tr>
+  `).join("") || `<tr><td colspan="5">No hay comprobantes registrados.</td></tr>`;
+}
+
+function renderMetrics() {
+  document.getElementById("metricTerceros").textContent = state.terceros.length;
+  document.getElementById("metricInventario").textContent = state.inventario.length;
+
+  const ingresos = state.comprobantes
+    .filter(c => ["factura_venta", "recibo_caja"].includes(c.tipoComprobante))
+    .reduce((acc, c) => acc + Number(c.total || 0), 0);
+
+  const gastos = state.comprobantes
+    .filter(c => ["factura_compra", "comprobante_egreso", "cuenta_pagar"].includes(c.tipoComprobante))
+    .reduce((acc, c) => acc + Number(c.total || 0), 0);
+
+  document.getElementById("metricIngresos").textContent = money(ingresos);
+  document.getElementById("metricGastos").textContent = money(gastos);
+}
+
+function labelTipo(tipo) {
+  const labels = {
+    factura_venta: "Factura de venta",
+    factura_compra: "Factura de compra",
+    cuenta_pagar: "Cuenta por pagar",
+    comprobante_egreso: "Comprobante de egreso",
+    recibo_caja: "Recibo de caja"
+  };
+  return labels[tipo] || tipo;
+}
+
+renderAll();
+renderDynamicForm();
