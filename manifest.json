@@ -1,0 +1,17 @@
+{
+  "name": "FINANZAS JL - Panel Contable",
+  "short_name": "Finanzas JL",
+  "description": "Aplicación contable para control de ingresos, gastos, deudas, reportes y acceso Premium.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#F2F2F2",
+  "theme_color": "#1F4E79",
+  "orientation": "any",
+  "categories": ["finance", "business", "productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
