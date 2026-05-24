@@ -302,7 +302,7 @@ function itemRowTemplate() {
     <tr class="item-row">
       <td>
         <select data-item="inventarioId" class="inventario-select">
-          <option value="">Manual...</option>
+          <option value="">Manual / seleccionar...</option>
           ${state.inventario.map(i => `<option value="${i.id}">${i.codigo} - ${i.nombre}</option>`).join("")}
         </select>
       </td>
@@ -367,7 +367,9 @@ function bindDynamicEvents() {
   const addItemBtn = document.getElementById("addItemBtn");
   if (addItemBtn) {
     addItemBtn.onclick = () => {
-      document.getElementById("itemsBody").insertAdjacentHTML("beforeend", itemRowTemplate());
+      const body = document.getElementById("itemsBody");
+      if (!body) return;
+      body.insertAdjacentHTML("beforeend", itemRowTemplate());
       bindDynamicEvents();
       calculateItems();
       updatePreview();
@@ -375,6 +377,7 @@ function bindDynamicEvents() {
   }
 
   dynamicForm.querySelectorAll("input, select, textarea").forEach(el => {
+    if (el.classList.contains("inventario-select")) return;
     el.oninput = handleInput;
     el.onchange = handleInput;
   });
@@ -386,25 +389,48 @@ function bindDynamicEvents() {
         e.target.closest("tr").remove();
         calculateItems();
         updatePreview();
+      } else {
+        alert("Debe quedar mínimo un ítem.");
       }
     };
   });
 
   dynamicForm.querySelectorAll(".inventario-select").forEach(select => {
-    select.onchange = (e) => fillItemFromInventory(e.target);
+    select.onchange = (e) => {
+      fillItemFromInventory(e.target);
+      calculateItems();
+      updatePreview();
+    };
   });
 }
 
 function fillItemFromInventory(select) {
-  const item = state.inventario.find(i => i.id === select.value);
   const row = select.closest("tr");
-  if (!item || !row) return;
+  if (!row) return;
 
-  row.querySelector('[data-item="codigo"]').value = item.codigo;
-  row.querySelector('[data-item="descripcion"]').value = item.nombre;
-  row.querySelector('[data-item="unidad"]').value = item.unidad;
-  row.querySelector('[data-item="valorUnitario"]').value = item.precio;
-  row.querySelector('[data-item="iva"]').value = item.iva;
+  if (!select.value) {
+    row.querySelector('[data-item="codigo"]').value = "";
+    row.querySelector('[data-item="descripcion"]').value = "";
+    row.querySelector('[data-item="unidad"]').value = "";
+    row.querySelector('[data-item="valorUnitario"]').value = "0";
+    row.querySelector('[data-item="iva"]').value = "0";
+    calculateItems();
+    updatePreview();
+    return;
+  }
+
+  const item = state.inventario.find(i => String(i.id) === String(select.value));
+  if (!item) {
+    console.warn("No se encontró el ítem de inventario:", select.value, state.inventario);
+    return;
+  }
+
+  row.querySelector('[data-item="codigo"]').value = item.codigo || "";
+  row.querySelector('[data-item="descripcion"]').value = item.nombre || "";
+  row.querySelector('[data-item="unidad"]').value = item.unidad || "Und";
+  row.querySelector('[data-item="valorUnitario"]').value = Number(item.precio || 0);
+  row.querySelector('[data-item="iva"]').value = Number(item.iva || 0);
+
   calculateItems();
   updatePreview();
 }
@@ -623,7 +649,13 @@ document.getElementById("guardarItemBtn").addEventListener("click", () => {
 document.getElementById("limpiarItemBtn").addEventListener("click", limpiarItem);
 
 function limpiarItem() {
-  ["itemCodigo","itemNombre","itemCategoria","itemCosto","itemPrecio","itemIva","itemStock","itemStockMinimo","itemCuentaIngreso","itemCuentaCosto","itemObservaciones"].forEach(id => document.getElementById(id).value = id.includes("Costo") || id.includes("Precio") || id.includes("Iva") || id.includes("Stock") ? "0" : "");
+  ["itemCodigo","itemNombre","itemCategoria","itemCuentaIngreso","itemCuentaCosto","itemObservaciones"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+
+  ["itemCosto","itemPrecio","itemIva","itemStock","itemStockMinimo"].forEach(id => {
+    document.getElementById(id).value = "0";
+  });
 }
 
 function val(id) {

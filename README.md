@@ -56,3 +56,13 @@ Más adelante se puede cambiar por Firebase Firestore.
 6. Selecciona tercero e ítem.
 7. Guarda el comprobante.
 8. Revisa Historial e Inicio.
+
+
+## Corrección Fix Items
+
+Esta versión mejora la tabla de ítems:
+- Selección estable desde inventario.
+- Carga automática de código, descripción, unidad, precio e IVA.
+- Recalcula subtotal, descuento, IVA y total.
+- Permite registrar ítems manuales.
+- Mantiene mínimo un ítem por comprobante.
